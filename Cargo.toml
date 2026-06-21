@@ -1,0 +1,57 @@
+# Workspace manifest for the public ZK-SDK source mirror.
+#
+# This file is the root `Cargo.toml` of the public, self-contained Apache-2.0
+# repository that mirrors the three public crates — `kibo-crypto-core` (the
+# crypto kernel), `kibo-kms-rest` (the REST-direct KMS client), and
+# `kibo-kms-rest-ffi` (the uniffi / wasm-bindgen bindings). It carries only the
+# workspace inheritance (package fields, lints, and the dependency pins) those
+# three crates require, so a clean checkout of the mirror builds standalone.
+[workspace]
+resolver = "2"
+members = [
+    "crates/kibo-crypto-core",
+    "crates/kibo-kms-rest",
+    "crates/kibo-kms-rest-ffi",
+]
+
+[workspace.package]
+version = "2.1.0"
+edition = "2024"
+rust-version = "1.91.1"
+license = "Apache-2.0"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+# The `kani` cfg is set by the Kani model checker (`cargo kani`); declare it
+# expected so the `#[cfg(kani)]` proof gates do not warn under a normal build.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "warn"
+
+[workspace.dependencies]
+# Crypto primitives (RustCrypto — pure-Rust, no FFI). Exact pins on the AEAD
+# and HMAC primitives keep the cryptographic kernel reproducible across builds.
+aes-gcm-siv = { version = "=0.11.1", default-features = false, features = ["aes", "alloc"] }
+sha2 = { version = "0.10.8", default-features = false }
+hkdf = { version = "0.12.4", default-features = false }
+hmac = { version = "=0.12.1", default-features = false }
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+zeroize = { version = "1.7.0", features = ["derive", "alloc"] }
+base64 = "0.22"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Errors + async traits
+thiserror = "2"
+async-trait = "0.1"
+
+# Async runtime (uniffi async exports) + HTTP client (rustls only, no native-tls).
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "signal", "fs"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
