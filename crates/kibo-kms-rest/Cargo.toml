@@ -1,0 +1,69 @@
+[package]
+name = "kibo-kms-rest"
+version = "2.14.2"
+edition.workspace = true
+rust-version.workspace = true
+license = "Apache-2.0"
+# Published to crates.io with kibo-crypto-core (the `k9o` Rust SDK depends on it).
+publish = true
+repository = "https://github.com/k9o-dev/kibo-kms-rest"
+description = "On-device REST-direct KMS layer (EaaS) for mobile/IoT/edge: KEK-free customer-KMS Encrypt/Decrypt over plain HTTPS, no vendor SDKs"
+
+[lints]
+workspace = true
+
+[dependencies]
+# Shared PUB envelope framing + boundary types. A-/C-produced
+# ciphertexts MUST share this framing (see `envelope` module docs).
+kibo-crypto-core = { path = "../kibo-crypto-core", version = "0.2.0" }
+
+# Minimal HTTP/TLS client — rustls only, NO native-tls, NO vendor SDK.
+# Reuses the workspace `reqwest` pin (rustls-tls + json).
+reqwest = { workspace = true }
+
+# SHA-256 for the AWS SigV4 canonical-request hash + HMAC-SHA256 for the
+# SigV4 signing-key derivation and request signature.
+sha2 = { workspace = true }
+hmac = { workspace = true }
+
+# Base64 (standard alphabet) for the KMS REST `Plaintext` / `CiphertextBlob`
+# JSON fields — wire-encoded per the AWS KMS API reference.
+base64 = { workspace = true }
+
+# (De)serialisation of REST request/response bodies + the federated
+# token / envelope-audit shapes.
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error surface.
+thiserror = { workspace = true }
+
+# Transient-secret hygiene: 32-byte DEK + federated token wiped on drop.
+zeroize = { workspace = true }
+
+# `async fn` in the `KmsRestProvider` trait.
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[features]
+# Provider selection is ADDITIVE and composable: enable one or more. A
+# single-provider build links just that backend; an all-providers build links
+# all four and dispatches on the caller's runtime `provider` field. There is no
+# default provider — a zero-provider build is a configuration error (caught at
+# runtime when a call finds no matching provider; see the crate-root docs).
+kms-aws = []
+kms-gcp = []
+kms-azure = []
+kms-vault = []
+
+# WASM-targeting pass: this is the edge-safe ZK core
+# the @k9o/kibo SDK binds via wasm-bindgen for the browser/RN SDKs. On wasm32
+# `reqwest` auto-selects its `fetch` backend (rustls is cfg'd out there, so the
+# workspace rustls-tls pin is a no-op on wasm — no Cargo change needed for it).
+# The only blocker is `getrandom`, which needs its `js` backend (the browser
+# `crypto.getRandomValues`) on `wasm*-unknown-unknown`. Enabling it here (feature
+# unification reaches the transitive copy) makes the crate wasm-bindable.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }

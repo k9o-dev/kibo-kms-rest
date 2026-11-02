@@ -1,0 +1,84 @@
+[package]
+name = "kibo-kms-rest-ffi"
+version = "0.2.0"
+edition.workspace = true
+rust-version.workspace = true
+license = "Apache-2.0"
+publish.workspace = true
+description = "FFI binding crate for kibo-kms-rest: uniffi/NAPI native + wasm-bindgen browser/RN; zk_encrypt / zk_decrypt"
+
+[lib]
+# cdylib  — required by wasm-pack (wasm32) and uniffi-bindgen (native dynamic).
+# staticlib — required by uniffi-bindgen for static linking (iOS, some mobile targets).
+crate-type = ["cdylib", "staticlib"]
+
+# Project-local uniffi-bindgen: generates the native Swift/Kotlin/Python/Ruby
+# bindings from the compiled cdylib. Gated behind the bin-only `cli` feature so
+# the uniffi `cli` dependency NEVER enters the library/cdylib build (it is only
+# needed to RUN the generator, not to compile the FFI surface).
+#   cargo run --bin uniffi-bindgen --features cli -- generate \
+#     --library target/release/libkibo_kms_rest_ffi.dylib \
+#     --language ruby --out-dir bindings/ruby
+[[bin]]
+name = "uniffi-bindgen"
+required-features = ["cli"]
+
+[lints]
+workspace = true
+
+[dependencies]
+kibo-kms-rest = { path = "../kibo-kms-rest" }
+kibo-crypto-core = { path = "../kibo-crypto-core" }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+zeroize = { workspace = true }
+async-trait = { workspace = true }
+
+# Tokio runtime — uniffi async needs it; native only (excluded on wasm32).
+tokio = { workspace = true, optional = true }
+
+# uniffi: native FFI (Swift, Kotlin, Python, Go, Ruby, C). The `tokio` feature
+# is REQUIRED by the `#[uniffi::export(async_runtime = "tokio")]` exports — it
+# pulls in `async_compat` (re-exported by uniffi_core) + the tokio async-runtime
+# shim the generated scaffolding references. Without it, `setup_scaffolding!`
+# can't resolve `async_compat`, which cascades into UniFfiTag/LowerReturn errors.
+uniffi = { version = "0.28", features = ["tokio"], optional = true }
+
+# wasm-bindgen: browser / React Native JS SDK.
+wasm-bindgen = { version = "0.2", optional = true }
+js-sys = { version = "0.3", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+
+[features]
+# Provider selection — additive/composable, mirrors kibo-kms-rest: enable one or
+# more (an all-providers build links all four; the runtime `provider` dispatches).
+kms-aws   = ["kibo-kms-rest/kms-aws"]
+kms-gcp   = ["kibo-kms-rest/kms-gcp"]
+kms-azure = ["kibo-kms-rest/kms-azure"]
+kms-vault = ["kibo-kms-rest/kms-vault"]
+
+# FFI target selection — pick one per build artifact.
+ffi-uniffi = ["dep:uniffi", "dep:tokio", "uniffi/tokio"]
+
+# Bin-only: the uniffi-bindgen CLI. Kept OUT of ffi-uniffi so the library build
+# never pulls uniffi's `cli` (clap etc.); enable only to run the generator bin.
+cli = ["dep:uniffi", "uniffi/cli"]
+ffi-wasm   = [
+    "dep:wasm-bindgen",
+    "dep:js-sys",
+    "dep:wasm-bindgen-futures",
+    "dep:serde-wasm-bindgen",
+]
+
+# Skip the wasm-pack wasm-opt pass: the bundled wasm-opt (old binaryen) can't
+# validate the bulk-memory ops modern rustc emits, so `-O` fails. Size-opt only,
+# no crypto transform.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+# wasm32 / getrandom(js) — same as kibo-kms-rest (browser crypto.getRandomValues).
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
