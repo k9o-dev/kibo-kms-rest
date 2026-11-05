@@ -1,0 +1,110 @@
+{
+  "aad": [
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f76310000001170726f6a5f32757342476f5251644f574e0000000370696900000000",
+      "context": null,
+      "keyring": "pii",
+      "projectId": "proj_2usBGoRQdOWN"
+    },
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f76310000001170726f6a5f32757342476f5251644f574e0000000370696900000007757365723a3432",
+      "context": "user:42",
+      "keyring": "pii",
+      "projectId": "proj_2usBGoRQdOWN"
+    },
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f763100000001700000000261620000000163",
+      "context": "c",
+      "keyring": "ab",
+      "projectId": "p"
+    },
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f763100000001700000000161000000026263",
+      "context": "bc",
+      "keyring": "a",
+      "projectId": "p"
+    },
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f76310000001170726f6a5f32757342476f5251644f574e0000000962696c6c696e672d320000000b6e61c3af766520f09f9492",
+      "context": "naïve 🔒",
+      "keyring": "billing-2",
+      "projectId": "proj_2usBGoRQdOWN"
+    }
+  ],
+  "about": "k9o.crypto container v1: AAD = domain || projectId || keyring || context, each u32-BE(len) || bytes, domain \"k9o-app-crypto/v1\"; container = 0x01 || u32-BE(len(W)) || W || D; D = nonce(12) || ct || tag(16), AES-256-GCM-SIV with key commitment. Data vectors are open-direction (the seal nonce is internal).",
+  "frame": [
+    {
+      "containerHex": "01000000064b49424f2d57442d6279746573",
+      "dataHex": "442d6279746573",
+      "wrappedHex": "4b49424f2d57"
+    },
+    {
+      "containerHex": "0100000000",
+      "dataHex": "",
+      "wrappedHex": ""
+    }
+  ],
+  "open": [
+    {
+      "context": "user:42",
+      "dataHex": "8b3574b137e50714ea11abb95845f865519eb4816f4f62cb4198b768bb429d6418",
+      "dekHex": "4242424242424242424242424242424242424242424242424242424242424242",
+      "keyring": "pii",
+      "plaintextHex": "68656c6c6f",
+      "projectId": "proj_2usBGoRQdOWN"
+    },
+    {
+      "context": null,
+      "dataHex": "ea055b2dc2cd3ae46df6519b759cc91c5ca2d78d49ef22b7da7e2a20",
+      "dekHex": "4242424242424242424242424242424242424242424242424242424242424242",
+      "keyring": "pii",
+      "plaintextHex": "",
+      "projectId": "proj_2usBGoRQdOWN"
+    }
+  ],
+  "openRejects": [
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f76310000001170726f6a5f32757342476f5251644f574e0000000370696900000007757365723a3433",
+      "dataHex": "8b3574b137e50714ea11abb95845f865519eb4816f4f62cb4198b768bb429d6418",
+      "dekHex": "4242424242424242424242424242424242424242424242424242424242424242",
+      "why": "another context"
+    },
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f76310000001170726f6a5f32757342476f5251644f574e0000000762696c6c696e6700000007757365723a3432",
+      "dataHex": "8b3574b137e50714ea11abb95845f865519eb4816f4f62cb4198b768bb429d6418",
+      "dekHex": "4242424242424242424242424242424242424242424242424242424242424242",
+      "why": "another keyring"
+    },
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f76310000000a70726f6a5f6f746865720000000370696900000007757365723a3432",
+      "dataHex": "8b3574b137e50714ea11abb95845f865519eb4816f4f62cb4198b768bb429d6418",
+      "dekHex": "4242424242424242424242424242424242424242424242424242424242424242",
+      "why": "another project"
+    },
+    {
+      "aadHex": "000000116b396f2d6170702d63727970746f2f76310000001170726f6a5f32757342476f5251644f574e0000000370696900000007757365723a3432",
+      "dataHex": "8b3574b137e50714ea11abb95845f865519eb4816f4f62cb4198b768bb429d6418",
+      "dekHex": "4343434343434343434343434343434343434343434343434343434343434343",
+      "why": "another DEK"
+    }
+  ],
+  "unframeRejects": [
+    {
+      "containerHex": "02000000015744",
+      "why": "another container version"
+    },
+    {
+      "containerHex": "",
+      "why": "empty"
+    },
+    {
+      "containerHex": "01000000090102",
+      "why": "length past the end"
+    },
+    {
+      "containerHex": "000000015744",
+      "why": "the extension route's framing"
+    }
+  ],
+  "version": 1
+}
